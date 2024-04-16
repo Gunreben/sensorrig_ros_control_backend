@@ -77,7 +77,6 @@ def run_image_subscriber():
 
 if __name__ == '__main__':
     # Creating threads for both Flask app and ImageSubscriber
-    
     thread_subscriber = Thread(target=run_image_subscriber)
     thread_subscriber.start()
 
