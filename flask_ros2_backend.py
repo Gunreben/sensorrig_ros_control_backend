@@ -1,6 +1,6 @@
 from threading import Thread
 import io
-from flask import Flask, request, send_file
+from flask import Flask, request, send_file, jsonify
 from flask_cors import CORS
 import subprocess
 import os
@@ -65,6 +65,30 @@ def get_latest_image():
             download_name='latest.jpg')
     else:
         return 'No image available', 404
+
+@app.route('/ros/topics')
+def get_ros_topics():
+    try:
+        topics = subprocess.check_output(['ros2', 'topic', 'list'], text=True)
+        topics_list = topics.strip().split('\n')
+        return jsonify(topics_list)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/ros/echo', methods=['POST'])
+def echo_ros_topic():
+    topic_name = request.json.get('topic')
+    if not topic_name:
+        return jsonify({"error": "No topic name provided"}), 400
+    try:
+        # Using subprocess to execute the ros2 command and get the first few lines
+        echo_output = subprocess.check_output(['ros2', 'topic', 'echo', '--once', topic_name], text=True, timeout=10)
+        return jsonify({"data": echo_output})
+    except subprocess.TimeoutExpired:
+        return jsonify({"error": f"Timeout: Could not get data from {topic_name}."}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 
 def run_image_subscriber():
