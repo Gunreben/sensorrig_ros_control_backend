@@ -13,7 +13,6 @@ from sensor_msgs.msg import Image
 import cv2
 import numpy as np
 import logging
-from frontend_image_subscriber import FrontendImageSubscriber
 from logging.handlers import RotatingFileHandler
 
 app = Flask(__name__)
@@ -22,7 +21,7 @@ recording_process = None
 
 image_subscriber = None
 
-topics_file = 'topics_to_record.txt'
+topics_file = '/workspaces/isaac_ros-dev/src/sensorrig_ros_control_backend/topics_to_record.txt'
 
 def read_topics_from_file(filename):
     """Reads a list of topics from a file."""
@@ -42,7 +41,8 @@ def start_recording():
     os.makedirs(date_path, exist_ok=True)
     output_path = f'{date_path}/{time_filename}.bag'
 
-    #specify topics
+
+    #specify topics 
     topics = read_topics_from_file(topics_file)
 
     recording_process = subprocess.Popen(['ros2', 'bag', 'record', '--output', output_path] + topics)
@@ -106,17 +106,6 @@ def echo_ros_topic():
 
 
 
-def run_image_subscriber():
-    rclpy.init(args=None)
-    global image_subscriber
-    image_subscriber = FrontendImageSubscriber("/camera_image/cam_HR")
-    rclpy.spin(image_subscriber)
-    image_subscriber.destroy_node()
-    rclpy.shutdown()
 
 if __name__ == '__main__':
-    # Creating threads for both Flask app and ImageSubscriber
-    #thread_subscriber = Thread(target=run_image_subscriber)
-    #thread_subscriber.start()
-
     app.run(host='0.0.0.0', port=5000, debug=True, threaded=False)
