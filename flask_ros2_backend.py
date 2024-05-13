@@ -22,15 +22,30 @@ recording_process = None
 
 image_subscriber = None
 
+topics_file = 'topics_to_record.txt'
+
+def read_topics_from_file(filename):
+    """Reads a list of topics from a file."""
+    with open(filename, 'r') as file:
+        topics = [line.strip() for line in file if line.strip()]
+    return topics
+
+
 @app.route('/start', methods=['POST'])
 def start_recording():
     global recording_process
+    
+    #Set output_path
     now = datetime.now()
     date_path = now.strftime('/data/%Y-%m-%d')
     time_filename = now.strftime('%H:%M:%S')
     os.makedirs(date_path, exist_ok=True)
     output_path = f'{date_path}/{time_filename}.bag'
-    recording_process = subprocess.Popen(['ros2', 'bag', 'record', '-a', '--output', output_path])
+
+    #specify topics
+    topics = read_topics_from_file(topics_file)
+
+    recording_process = subprocess.Popen(['ros2', 'bag', 'record', '--output', output_path] + topics)
     return f'Started recording, saving to {output_path}', 200
 
 @app.route('/stop', methods=['POST'])
@@ -101,7 +116,7 @@ def run_image_subscriber():
 
 if __name__ == '__main__':
     # Creating threads for both Flask app and ImageSubscriber
-    thread_subscriber = Thread(target=run_image_subscriber)
-    thread_subscriber.start()
+    #thread_subscriber = Thread(target=run_image_subscriber)
+    #thread_subscriber.start()
 
     app.run(host='0.0.0.0', port=5000, debug=True, threaded=False)
