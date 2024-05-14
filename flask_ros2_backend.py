@@ -14,6 +14,10 @@ import cv2
 import numpy as np
 import logging
 from logging.handlers import RotatingFileHandler
+import socket
+
+RELAY_IP_1 = '192.168.26.50'  # IP address of the tractor's control system
+RELAY_PORT_1 = 502  # RELAY_PORT_1 used by the control system
 
 app = Flask(__name__)
 CORS(app)
@@ -22,6 +26,39 @@ recording_process = None
 image_subscriber = None
 
 topics_file = '/workspaces/isaac_ros-dev/src/sensorrig_ros_control_backend/topics_to_record.txt'
+
+
+# Function to send command to the tractor
+def send_relay_command(channel, state):
+    cmd = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    cmd[5] = 0x06  # Byte length
+    cmd[6] = 0x01  # Device address
+    cmd[7] = 0x05  # Command
+    cmd[8] = 0  # Placeholder for future use
+    cmd[9] = channel  # Channel number
+    cmd[10] = 0xFF if state == 'on' else 0x00  # Turn on/off
+    cmd[11] = 0  # End of command
+
+    with socket.socket() as s:
+        s.connect((RELAY_IP_1, RELAY_PORT_1))  # Connect to the control system
+        s.send(bytearray(cmd))  # Send the command
+
+# Route to control lights
+@app.route('/control_light', methods=['POST']) 
+def control_light():
+    data = request.get_json()
+    channel = data.get('channel')
+    state = data.get('state')
+
+    if channel is None or state not in ['on', 'off']: 
+        return jsonify({'error': 'Invalid request'}), 400
+
+    if not (0 <= channel <= 7):
+        return jsonify({'error': 'Invalid channel'}), 400
+
+    send_relay_command(channel, state)
+    return jsonify({'message': f'Channel {channel} turned {state}'})
+
 
 def read_topics_from_file(filename):
     """Reads a list of topics from a file."""

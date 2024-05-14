@@ -9,9 +9,11 @@ camera_image/cam_HR
 /novatel/oem7/heading2
 /novatel/oem7/imu/data
 /ouster/imu
+/ouster/scan
 /ouster/points
 /tf_static
 /zed/zed_node/point_cloud/cloud_registered
-/zed/zed_node/left_raw/image_raw_color/compressed
-/zed/zed_node/right_raw/image_raw_color/compressed
+/zed/zed_node/rgb_raw/image_raw_color/compressed
+/zed/zed_node/rgb_raw/image_raw_color/compressed
+/zed/zed_node/temperature/imu
 
